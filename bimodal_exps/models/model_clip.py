@@ -86,9 +86,9 @@ class CLIP(nn.Module):
             #                              surrogate_c=surrogate_c, lamda_rho=lamda_rho, lamda_init=lamda_init)
             self.criterion = SogCLR_Loss(world_size=world_size, gamma=sogclr_gamma, temperature=self.temp, bsz=bsz)
 
-        # elif self.ita_type == 'sogclr_dro':
-        #     self.criterion = SogCLR_DRO_Loss(world_size=world_size, gamma=sogclr_gamma, rho_init=rho_init, tau_init=tau_init, bsz=bsz,
-        #                                      eta_init=eta_init, beta_u=beta_u, enable_surrogate=enable_surrogate)
+        elif self.ita_type == 'sogclr_dro':
+            self.criterion = SogCLR_DRO_Loss(world_size=world_size, gamma=sogclr_gamma, rho_init=rho_init, tau_init=tau_init, bsz=bsz,
+                                              eta_init=eta_init, beta_u=beta_u, enable_surrogate=enable_surrogate)
         elif self.ita_type == 'isogclr_new_v2':
             self.criterion = iSogCLR_New_v2_Loss(world_size=world_size, gamma=sogclr_gamma, rho_init=rho_init, tau_init=tau_init, bsz=bsz,
                                                  eta_init=eta_init, beta_u=beta_u)
