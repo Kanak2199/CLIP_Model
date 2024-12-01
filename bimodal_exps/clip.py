@@ -659,6 +659,7 @@ if __name__ == '__main__':
     parser.add_argument('--vicreg_sim_coeff', default=25.0, type=float)
     parser.add_argument('--vicreg_std_coeff', default=25.0, type=float)
     parser.add_argument('--sogclr_gamma', default=0.8, type=float)
+    parser.add_argument('--rho_init', default=6.0, type=float)
     parser.add_argument('--rho_I', default=8.0, type=float)
     parser.add_argument('--rho_T', default=8.0, type=float)
     parser.add_argument('--eta_init', default=0.001, type=float)
