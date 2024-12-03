@@ -716,7 +716,7 @@ class onlineCLR_Loss(nn.Module):
 
 class Infonce_Loss(nn.Module):
     def __init__(self, temperature=0.07):
-        super(InfoNCELoss, self).__init__()
+        super(Infonce_Loss, self).__init__()
         self.temperature = temperature
 
     def forward(self, image_feat, text_feat):
@@ -730,7 +730,7 @@ class Infonce_Loss(nn.Module):
 
 class DynamicTempLoss(nn.Module):
     def __init__(self, tau_min=0.01, tau_max=0.1):
-        super(DynamicTemperatureLoss, self).__init__()
+        super(DynamicTempLoss, self).__init__()
         self.tau_min = tau_min
         self.tau_max = tau_max
         # Neural network for predicting temperature
