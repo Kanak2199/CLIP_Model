@@ -17,11 +17,9 @@ class Lookahead(Optimizer):
             raise ValueError(f'Invalid lookahead steps: {k}')
         defaults = dict(lookahead_alpha=alpha, lookahead_k=k, lookahead_step=0)
         self.base_optimizer = base_optimizer
-        self.param_groups = self.base_optimizer.param_groups
-        self.defaults = base_optimizer.defaults
-        self.defaults.update(defaults)
+        self._param_groups = self.base_optimizer.param_groups
         self.state = defaultdict(dict)
-        # manually add our defaults to the param groups
+
         for name, default in defaults.items():
             for group in self.param_groups:
                 group.setdefault(name, default)
@@ -43,7 +41,7 @@ class Lookahead(Optimizer):
             self.update_slow(group)
 
     def step(self, closure=None):
-        #assert id(self.param_groups) == id(self.base_optimizer.param_groups)
+        # Perform a single optimization step with the base optimizer
         loss = self.base_optimizer.step(closure)
         for group in self.param_groups:
             group['lookahead_step'] += 1
@@ -72,21 +70,34 @@ class Lookahead(Optimizer):
         }
         self.base_optimizer.load_state_dict(fast_state_dict)
 
-        # We want to restore the slow state, but share param_groups reference
-        # with base_optimizer. This is a bit redundant but least code
-        slow_state_new = False
-        if 'slow_state' not in state_dict:
-            print('Loading state_dict from optimizer without Lookahead applied.')
-            state_dict['slow_state'] = defaultdict(dict)
-            slow_state_new = True
         slow_state_dict = {
-            'state': state_dict['slow_state'],
-            'param_groups': state_dict['param_groups'],  # this is pointless but saves code
+            'state': state_dict.get('slow_state', {}),
+            'param_groups': state_dict['param_groups'],
         }
         super(Lookahead, self).load_state_dict(slow_state_dict)
-        self.param_groups = self.base_optimizer.param_groups  # make both ref same container
-        if slow_state_new:
-            # reapply defaults to catch missing lookahead specific ones
-            for name, default in self.defaults.items():
-                for group in self.param_groups:
-                    group.setdefault(name, default)
+        self._param_groups = self.base_optimizer.param_groups
+        for name, default in self.defaults.items():
+            for group in self.param_groups:
+                group.setdefault(name, default)
+
+    # Expose attributes for compatibility with PyTorch GradScaler
+    @property
+    def _optimizer_step_pre_hooks(self):
+        return getattr(self.base_optimizer, '_optimizer_step_pre_hooks', {})
+
+    @property
+    def _optimizer_step_post_hooks(self):
+        return getattr(self.base_optimizer, '_optimizer_step_post_hooks', {})
+
+    @property
+    def defaults(self):
+        return self.base_optimizer.defaults
+
+    @property
+    def param_groups(self):
+        return self._param_groups
+
+    @param_groups.setter
+    def param_groups(self, value):
+        self._param_groups = value
+        self.base_optimizer.param_groups = value
