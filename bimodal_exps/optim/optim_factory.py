@@ -122,8 +122,8 @@ def create_optimizer(args, model, filter_bias_and_bn=True):
         assert False and "Invalid optimizer"
         raise ValueError
 
-    if len(opt_split) > 1:
-        if opt_split[0] == 'lookahead':
-            optimizer = Lookahead(optimizer)
+    if len(opt_split) > 1 and opt_split[0] == 'lookahead':
+        optimizer = Lookahead(optimizer)
+
 
     return optimizer
