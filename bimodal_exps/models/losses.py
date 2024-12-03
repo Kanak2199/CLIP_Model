@@ -714,5 +714,50 @@ class onlineCLR_Loss(nn.Module):
 
         return loss
 
+class Infonce_Loss(nn.Module):
+    def __init__(self, temperature=0.07):
+        super(InfoNCELoss, self).__init__()
+        self.temperature = temperature
+
+    def forward(self, image_feat, text_feat):
+        # Normalize features
+        image_feat = F.normalize(image_feat, p=2, dim=1)
+        text_feat = F.normalize(text_feat, p=2, dim=1)
+        similarity_matrix = torch.matmul(image_feat, text_feat.T) / self.temperature
+        labels = torch.arange(image_feat.size(0), device=image_feat.device)
+        loss = F.cross_entropy(similarity_matrix, labels)
+
+        return loss
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class DynamicTempLoss(nn.Module):
+    def __init__(self, tau_min=0.01, tau_max=0.1):
+        super(DynamicTemperatureLoss, self).__init__()
+        self.tau_min = tau_min
+        self.tau_max = tau_max
+        # Neural network for predicting temperature
+        self.tau_net = nn.Sequential(
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, image_feat, text_feat):
+        image_feat = F.normalize(image_feat, p=2, dim=1)
+        text_feat = F.normalize(text_feat, p=2, dim=1)
+        similarity_matrix = torch.matmul(image_feat, text_feat.T)
+        image_tau = self.tau_net(image_feat).squeeze() * (self.tau_max - self.tau_min) + self.tau_min
+        text_tau = self.tau_net(text_feat).squeeze() * (self.tau_max - self.tau_min) + self.tau_min
+
+        tau_matrix = torch.outer(image_tau, text_tau)
+        logits = similarity_matrix / tau_matrix
+
+        labels = torch.arange(image_feat.size(0), device=image_feat.device)
+        loss = F.cross_entropy(logits, labels)
+        return loss
 
 
