@@ -726,12 +726,7 @@ class Infonce_Loss(nn.Module):
         similarity_matrix = torch.matmul(image_feat, text_feat.T) / self.temperature
         labels = torch.arange(image_feat.size(0), device=image_feat.device)
         loss = F.cross_entropy(similarity_matrix, labels)
-
         return loss
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
 class DynamicTempLoss(nn.Module):
     def __init__(self, tau_min=0.01, tau_max=0.1):
