@@ -25,6 +25,8 @@ class CLIP(nn.Module):
                  rho_init = 6.0,
                  eta_init = 0.001,
                  tau_init = 0.01,
+                 tau_min=0.01, 
+                 tau_max=0.1,
                  eta_sched = None,
                  eta_exp_gamma = 0.8,
                  beta_u = 0.9,
@@ -97,6 +99,12 @@ class CLIP(nn.Module):
             self.criterion = iSogCLR_New_v1_Loss(world_size=world_size, gamma=sogclr_gamma, rho_init=rho_init, bsz=bsz)
         elif self.ita_type == 'onlineclr':
             self.criterion = onlineCLR_Loss(world_size=world_size, temperature=self.temp, gamma=sogclr_gamma)
+
+        elif self.ita_type == 'infonce':
+            self.criterion = Infonce_Loss(temperature=self.temp)
+        
+        elif self.ita_type == 'dynamictemploss':
+            self.criterion = DynamicTempLoss(tau_min=tau_min, tau_max=tau_max)
 
         elif self.ita_type == 'isogclr_new':
             self.criterion = iSogCLR_New_Loss(world_size=world_size, gamma=sogclr_gamma, rho_I=rho_I, rho_T=rho_T, tau_init=tau_init, bsz=bsz,
@@ -206,6 +214,11 @@ class CLIP(nn.Module):
             loss_ita = self.criterion(image_feat, text_feat)
             info_dict['avg_text_tau'] = 0.0
             info_dict['avg_image_tau'] = 0.0
+
+        elif self.ita_type in ['infonce', 'dynamictemploss']:
+            loss_ita = self.criterion(image_feat, text_feat)
+            info_dict['avg_image_tau'] = 0.0
+            info_dict['avg_text_tau'] = 0.0
 
         else:
             raise NotImplementedError
